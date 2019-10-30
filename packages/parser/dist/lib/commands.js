@@ -33,7 +33,7 @@ class Commands extends _events.default {
 
   call(fnName) {
     const executor = new FunctionExecutor(fnName, this.functions[fnName]);
-    executor.execute(this);
+    executor.execute(this).then();
   }
 
   push(arg, context) {
@@ -108,8 +108,19 @@ class FunctionExecutor {
     this.localScope = {};
   }
 
-  execute(actions) {
+  async execute(actions) {
     for (let i = 0; i < this.commands.length; i++) {
+      console.log('before execute:');
+      const res = await new Promise((resolve, reject) => {
+        console.log('inside promise');
+
+        if (true) {
+          actions.on('next', resolve);
+        } else {
+          resolve();
+        }
+      });
+      console.log('execute:');
       const cmd = this.commands[i];
       if (cmd.type === 'label') continue;
 

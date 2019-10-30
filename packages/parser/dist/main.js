@@ -32,4 +32,12 @@ lbl:
 //    end            # завершение исполнения
 // `;
 
-(0, _index.parser)(code).interpret();
+const p = (0, _index.parser)(code);
+p.subscribe('finish', data => console.log(data));
+p.interpret();
+setTimeout(() => {
+  p.next('next');
+}, 0);
+setTimeout(() => {
+  p.next('next');
+}, 3000);

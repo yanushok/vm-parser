@@ -40,23 +40,15 @@ function parser(instructions = '') {
     const functions = codeParser(instructions);
     const commands = new Commands(stack, functions);
 
-    function subscribe(fnName, handler) {
-        commands.on(fnName, handler);
+    function subscribe(...args) {
+        commands.on(...args);
+    }
+
+    function next(...args) {
+        commands.emit(...args);
     }
 
     function interpret() {
-        // subscribe('out', function (value) {
-        //     console.log('out', value);
-        // });
-
-        // subscribe('finish', function (data) {
-        //     console.log(data);
-        // });
-
-        // subscribe('ret', function (data) {
-        //     console.log(data);
-        // });
-
         return new Promise((resolve, reject) => {
             setImmediate(() => {
                 try {
@@ -74,7 +66,8 @@ function parser(instructions = '') {
 
     return {
         interpret,
-        subscribe
+        subscribe,
+        next
     };
 }
 

@@ -32,4 +32,6 @@ lbl:
 //    end            # завершение исполнения
 // `;
 
-parser(code).interpret();
+const p = parser(code);
+
+p.interpret();
