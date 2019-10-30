@@ -1,0 +1,20 @@
+{
+  "name": "@vm-parser/parser",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "babel-node ./src/main.js",
+    "build": "babel src --out-dir dist --copy-files",
+    "build:w": "babel src --watch --out-dir dist --copy-files"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "lodash-fp": "^0.10.4"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.6.3"
+  }
+}

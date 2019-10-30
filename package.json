@@ -1,0 +1,20 @@
+{
+  "name": "@vm-parser/app",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start:dev": "run-s start:dev:*",
+    "start:dev:parser": "yarn build:parser",
+    "start:dev:api": "yarn workspace @vm-parser/api start:dev",
+    "build": "run-p build:*",
+    "build:parser": "yarn workspace @vm-parser/parser build",
+    "build:api": "yarn workspace @vm-parser/api build"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

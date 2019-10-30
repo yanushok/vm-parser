@@ -1,0 +1,24 @@
+{
+  "name": "@vm-parser/api",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node ./dist/server.js",
+    "start:dev": "cross-env DEBUG=vm-parse:api NODE_ENV=development nodemon --watch ../parser --exec babel-node ./src/server.js",
+    "build": "babel src --out-dir dist --copy-files"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "cross-env": "^6.0.3",
+    "nodemon": "^1.19.4"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "morgan": "^1.9.1"
+  }
+}
