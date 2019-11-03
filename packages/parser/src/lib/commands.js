@@ -1,35 +1,39 @@
-import EventEmitter from 'events';
 import { isNumber } from "lodash";
 
-class Commands extends EventEmitter {
-    constructor(stack, functions) {
-        super();
+class Commands {
+    constructor(stack, functions, emitter, options) {
         this.stack = stack;
         this.functions = functions;
+        this.emitter = emitter;
+        this.options = options;
     }
 
     end() {
-        this.emit('finish', {
+        this.emitter.emit('finish', {
             dataStack: this.stack.getState()
         });
     }
 
     ret(fnName) {
-        this.emit('ret', {
+        this.emitter.emit('ret', {
             dataStack: this.stack.getState(),
             fromFunction: fnName
         });
     }
 
-    call(fnName) {
-        const executor = new FunctionExecutor(fnName, this.functions[fnName]);
-        executor.execute(this).then();
+    async call(fnName) {
+        const fn = this.functions[fnName];
+        const executor = new FunctionExecutor(fnName, fn, this.options);
+        // executor.execute(this);
+        await executor.execute(this);
+        console.log('azazazazazaza')
     }
 
     push(arg, context) {
         if (isNumber(arg)) {
             this.stack.push(arg);
         } else {
+            console.log('push: ', context, arg);
             this.stack.push(context[arg]);
         }
     }
@@ -39,40 +43,40 @@ class Commands extends EventEmitter {
         context[arg] = value;
     }
 
-    dup() {
+    dup(arg, context) {
         const temp = this.stack.pop();
-        this.push(temp);
-        this.push(temp);
+        this.push(temp, context);
+        this.push(temp, context);
     }
 
-    add() {
+    add(arg, context) {
         const first = this.stack.pop();
         const second = this.stack.pop();
-        this.push(first + second);
+        this.push(first + second, context);
     }
 
-    sub() {
+    sub(arg, context) {
         const second = this.stack.pop();
         const first = this.stack.pop();
-        this.push(first - second);
+        this.push(first - second, context);
     }
 
-    mul() {
+    mul(arg, context) {
         const first = this.stack.pop();
         const second = this.stack.pop();
-        this.push(first * second);
+        this.push(first * second, context);
     }
 
-    div() {
+    div(arg, context) {
         const second = this.stack.pop();
         const first = this.stack.pop();
-        this.push(Math.round(first / second));
+        this.push(Math.round(first / second), context);
     }
 
     callext(fnName) {
         const value = this.stack.pop();
         if (this.eventNames().includes(fnName)) {
-            this.emit(fnName, value);
+            this.emitter.emit(fnName, value);
         }
     }
 
@@ -92,34 +96,44 @@ class Commands extends EventEmitter {
 }
 
 class FunctionExecutor {
-    constructor(fnName, commands) {
-        this.commands = commands;
+    constructor(fnName, cmds, { debug, breakpoints }) {
+        this.cmds = cmds;
         this.fnName = fnName;
         this.localScope = {};
+
+        this.debug = debug;
+        this.breakpoints = breakpoints;
+
+        // console.log(this.cmds);
     }
 
     async execute(actions) {
-        for (let i = 0; i < this.commands.length; i++) {
-            console.log('before execute:');
+        let counter = 0;
 
-            const res = await new Promise((resolve, reject) => {
-                console.log('inside promise');
-                if (true) {
-                    actions.on('next', resolve);
-                } else {
-                    resolve();
-                }    
+        for (let i = 0; i < this.cmds.length; i++) {
+            await new Promise((resolve, reject) => {
+                // if (this.degug) {
+                //     actions.on('next', resolve);
+                // } else {
+                //     resolve();
+                // }
+                setTimeout(resolve, 3000); 
             });
-            
-            console.log('execute:');
 
-            const cmd = this.commands[i];
+            const [globalStringNumber, cmd] = this.cmds[i];
+            console.log(cmd, counter);
+            console.log(actions[cmd.value]);
+
+            // if (counter === 6) {
+            //     return;
+            // }
+            counter++;
 
             if (cmd.type === 'label') continue;
 
             if (cmd.value.includes('if')) {
                 if (actions[cmd.value]()) {
-                    const label = this.commands
+                    const label = this.cmds
                         .filter(x => x.type === 'label')
                         .find(x => x.value === cmd.arg + ':');
 

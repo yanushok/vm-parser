@@ -1,74 +1,128 @@
-import { Node } from './lib/node';
-import Superviser from './lib/superviser';
-import Commands from './lib/commands';
+// import EventEmitter from 'events';
+// import Node from './lib/node';
+// import Superviser from './lib/superviser';
+// import Commands from './lib/commands';
+// import { pipe, map, trim, split, filter, reduce, head, last } from "lodash/fp";
 
-function codeParser(instructions = '') {
-    const removeComments = cmd => cmd.split('#')[0];
-    const removeEmptyStrings = cmd => cmd.trim() !== '';
-    const trim = cmd => cmd.trim();
+// function codeParser(instructions = '') {
+//     // const removeComments = cmd => cmd.split('#')[0];
+//     // const removeEmptyStrings = cmd => cmd.trim() !== '';
+//     // const trim = cmd => cmd.trim();
 
-    // create object of function representation, name - function name, body - array of commands
-    const parseFunction = funcText => {
-        let [name, ...body] = funcText
-            .split('\n')
-            .map(removeComments)
-            .filter(removeEmptyStrings)
-            .map(trim);
+//     // create object of function representation, name - function name, body - array of commands
+//     const parseFunction = funcText => {
+//         let [name, ...body] = funcText
+//             .split('\n')
+//             .map(removeComments)
+//             .filter(removeEmptyStrings)
+//             .map(trim);
 
-        body = body.map((cmd, i) => new Node(cmd, i));
+//         body = body.map((cmd, i) => new Node(cmd, i));
 
-        return { name, body };
-    };
+//         return { name, body };
+//     };
 
-    // spliting source code to functions
-    let res = instructions
-        .split('function')
-        .slice(1)
-        .map(parseFunction);
+//     function createTuples(instructions) {
+//         let numberOfString = 1;
 
-    // transform array to object, key - function name, value - array of commands
-    res = res.reduce((prev, current) => {
-        prev[current.name] = current.body;
-        return prev;
-    }, {});
+//         return pipe(
+//             split('\n'),
+//             map(pipe(
+//                 split('#'),
+//                 head,
+//                 trim,
+//                 str => [numberOfString++, str],
+//             )),
+//             filter(last),
+//             reduce((acc, [number, command]) => {
+//                 if (command.includes('function')) {
+//                     acc.push([command.split(' ').pop()]);
+//                 } else {
+//                     const len = acc.length;
+//                     acc[len - 1].push([number, command]);
+//                 }
 
-    return res;
-}
+//                 return acc;
+//             }, []),
+//             reduce((acc, [functionName, ...commands]) => {
+//                 acc[functionName] = commands.map(([numOfString, cmdString], i) => [numOfString, new Node(cmdString, i, numOfString)]);
+//                 return acc;
+//             }, {})
+//         )(instructions);
+//     }
 
-function parser(instructions = '') {
-    const stack = new Superviser();
-    const functions = codeParser(instructions);
-    const commands = new Commands(stack, functions);
+//     let res = createTuples(instructions);
 
-    function subscribe(...args) {
-        commands.on(...args);
-    }
+//     // Object.keys(res).forEach(key => {
+//     //     console.log(key);
+//     //     console.log(res[key]);
+//     // });
+//     // process.exit(0);
 
-    function next(...args) {
-        commands.emit(...args);
-    }
+//     // spliting source code to functions
+//     // let res = instructions
+//     //     .split('function')
+//     //     .slice(1)
+//     //     .map(parseFunction);
 
-    function interpret() {
-        return new Promise((resolve, reject) => {
-            setImmediate(() => {
-                try {
-                    subscribe('finish', function (data) {
-                        resolve(data);
-                    });
+//     // console.log(res);
 
-                    commands.call('main');
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
-    }
+//     // // transform array to object, key - function name, value - array of commands
+//     // res = res.reduce((prev, current) => {
+//     //     prev[current.name] = current.body;
+//     //     return prev;
+//     // }, {});
 
-    return {
-        interpret,
-        subscribe,
-        next
-    };
-}
+//     // console.log(res);
 
-export { parser };
+//     return res;
+// }
+
+// function parser(instructions = '', debug = false, breakpoints = null) {
+//     const emitter = new EventEmitter();
+//     const stack = new Superviser();
+
+//     function subscribe(...args) {
+//         // commands.on(...args);
+//         emitter.on(...args);
+//     }
+
+//     function emit(...args) {
+//         // commands.emit(...args);
+//         emitter.emit(...args);
+//     }
+
+//     function next() {
+//         emit('next');
+//     }
+
+//     function interpret() {
+//         return new Promise((resolve, reject) => {
+//             setImmediate(() => {
+//                 try {
+//                     const functions = codeParser(instructions);
+//                     const commands = new Commands(stack, functions, emitter, { debug, breakpoints });
+
+//                     subscribe('finish', function (data) {
+//                         resolve(data);
+//                     });
+
+//                     commands.call('main').then(() => console.log('MAIN CALLED'));
+//                 } catch (error) {
+//                     reject(error);
+//                 }
+//             });
+//         });
+//     }
+
+//     return {
+//         interpret,
+//         subscribe,
+//         emit,
+//         next
+//     };
+// }
+
+// export { parser };
+
+export { parser } from './lib/parser';
