@@ -33,13 +33,34 @@ lbl:
 //    end            # завершение исполнения
 // `;
 
-const p = parser(code);
 
-// p.next().catch(err => console.log(err));
-p.checkErrors().then(() => {
-   console.log('it is ok');
-   return p.interpret();
-}).catch(err => {
-   console.log('azaza');
-   console.log(err);
-});
+// export const createTask = () => {
+//    const parserObj = parser(code);
+
+//    try {
+//        parserObj.parse();
+//    } catch (errors) {
+//       return errors.forEach(err => console.log(err.toString()));
+//    }
+
+//    parserObj.interpret().then();
+// };
+
+// createTask();
+
+let p = parser(code);
+
+try {
+   p.parse();
+} catch (error) {
+   console.log('catch');
+   console.log(error);
+}
+
+
+p.interpret()
+   .then(console.log)
+   .catch(err => {
+      console.log('azaza');
+      console.log(err);
+   });

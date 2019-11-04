@@ -21,7 +21,7 @@ var _commands = require("../utils/commands");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function codeParser(instructions = '') {
+function codeParser(tuples = []) {
   function tupleReducer(state, [number, command]) {
     if (command.includes('function')) {
       return [...state, [command.split(' ').pop()]];
@@ -43,56 +43,49 @@ function codeParser(instructions = '') {
     };
   }
 
-  function createTuples(instructions) {
-    let numberOfString = 1;
-    return (0, _lodash.default)(instructions).split('\n').map((0, _fp.pipe)((0, _fp.split)('#'), _fp.head, _fp.trim, str => [numberOfString++, str])).filter(_fp.last) // .reduce(tupleReducer, [])
-    // .reduce(functionsReducer, {});
-    .value();
-  }
+  return tuples.reduce(tupleReducer, []).reduce(functionsReducer, {});
+}
 
-  function checkErrors(tuples = []) {
-    const err = [];
-    tuples.forEach(([line, instruction]) => {
-      const [cmd, arg, ...rest] = instruction.split(' ').filter(x => x.length);
-      const mnemonic = cmd.toLowerCase();
-      if (mnemonic === '') return;
-      if (mnemonic[mnemonic.length - 1] === ':') return;
+function createTuples(instructions = '') {
+  let numberOfString = 1;
+  return (0, _lodash.default)(instructions).split('\n').map((0, _fp.pipe)((0, _fp.split)('#'), _fp.head, _fp.trim, str => [numberOfString++, str])).filter(_fp.last).value();
+}
 
-      if (!(0, _commands.isCommand)(mnemonic)) {
-        err.push(new _vmError.default(line, `Unknown opcode "${mnemonic}"`));
-        return;
-      }
+function checkErrors(tuples = []) {
+  const errors = [];
+  tuples.forEach(([line, instruction]) => {
+    const [cmd, arg, ...rest] = instruction.split(' ').filter(x => x.length);
+    const mnemonic = cmd.toLowerCase();
+    if (mnemonic === '') return;
+    if (mnemonic[mnemonic.length - 1] === ':') return;
 
-      if (rest.length > 0) {
-        err.push(new _vmError.default(line, `Command "${mnemonic}" has only one argument`));
-        return;
-      }
-
-      if (arg === undefined && !(0, _commands.isNarrowCommand)(mnemonic)) {
-        err.push(new _vmError.default(line, `Command "${mnemonic}" must have an arguments`));
-        return;
-      }
-
-      if (arg !== undefined && !(0, _commands.isWideCommand)(mnemonic)) {
-        err.push(new _vmError.default(line, `Command "${mnemonic}" must not have arguments`));
-        return;
-      }
-    });
-
-    if (err.length > 0) {
-      throw err;
+    if (!(0, _commands.isCommand)(mnemonic)) {
+      errors.push(new _vmError.default(line, `Unknown opcode "${mnemonic}"`));
+      return;
     }
 
-    return tuples;
-  }
+    if (rest.length > 0) {
+      errors.push(new _vmError.default(line, `Command "${mnemonic}" has only one argument`));
+      return;
+    }
 
-  return _lodash.default.flow(createTuples, checkErrors)(instructions);
+    if (arg === undefined && !(0, _commands.isNarrowCommand)(mnemonic)) {
+      errors.push(new _vmError.default(line, `Command "${mnemonic}" must have an arguments`));
+      return;
+    }
+
+    if (arg !== undefined && !(0, _commands.isWideCommand)(mnemonic)) {
+      errors.push(new _vmError.default(line, `Command "${mnemonic}" must not have arguments`));
+      return;
+    }
+  });
+  return errors;
 }
 
 function parser(instructions, opts = {}) {
+  let tuples = [];
+  let functionsObject = {};
   let hasErrors = false;
-  let checkedErrors = false;
-  let errors = [];
   const emitter = new _events.default();
   const mainStack = new _superviser.default();
   const options = Object.assign({}, {
@@ -102,6 +95,18 @@ function parser(instructions, opts = {}) {
 
   function emit(...args) {
     emitter.emit(...args);
+  }
+
+  function parse() {
+    tuples = createTuples(instructions);
+    const errors = checkErrors(tuples);
+
+    if (errors.length) {
+      hasErrors = true;
+      throw errors;
+    } else {
+      functionsObject = codeParser(tuples);
+    }
   }
 
   function next() {
@@ -120,24 +125,6 @@ function parser(instructions, opts = {}) {
     });
   }
 
-  function checkErrors() {
-    return new Promise((resolve, reject) => {
-      setImmediate(() => {
-        try {
-          codeParser(instructions);
-          hasErrors = false;
-          checkedErrors = true;
-          resolve('OK');
-        } catch (err) {
-          hasErrors = true;
-          errors = [...err];
-          checkedErrors = true;
-          reject(err);
-        }
-      });
-    });
-  }
-
   function interpret() {
     return new Promise((resolve, reject) => {
       setImmediate(() => {
@@ -145,14 +132,8 @@ function parser(instructions, opts = {}) {
           return reject(new Error('Source code has errors'));
         }
 
-        if (!checkedErrors) {
-          return checkErrors(instructions).then().catch(err => {
-            reject(err);
-          });
-        }
-
         try {
-          resolve();
+          resolve(functionsObject);
         } catch (err) {
           reject(err);
         }
@@ -163,6 +144,6 @@ function parser(instructions, opts = {}) {
   return {
     interpret,
     next,
-    checkErrors
+    parse
   };
 }

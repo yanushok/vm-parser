@@ -33,12 +33,16 @@ lbl:
 //    end            # завершение исполнения
 // `;
 
-const p = (0, _parser.parser)(code); // p.next().catch(err => console.log(err));
+let p = (0, _parser.parser)(code);
 
-p.checkErrors().then(() => {
-  console.log('it is ok');
-  return p.interpret();
-}).catch(err => {
+try {
+  p.parse();
+} catch (error) {
+  console.log('catch');
+  console.log(error);
+}
+
+p.interpret().then(console.log).catch(err => {
   console.log('azaza');
   console.log(err);
 });
