@@ -1,5 +1,8 @@
 import { pipe, split, map, trim } from "lodash/fp";
 
+export const LABEL = 'LABEL';
+export const COMMAND = 'COMMAND';
+
 class Node {
     constructor(value, i, globalString) {
         const [cmd, arg] = pipe(
@@ -8,14 +11,14 @@ class Node {
         )(value);
 
         this.value = cmd;
-        this.stringNumber = i;
+        this.localString = i;
         this.globalString = globalString;
         
         if (this.value.includes(':')) {
-            this.type = 'label';
+            this.type = LABEL;
             this.value = this.value.split(':')[0];
         } else {
-            this.type = 'command';
+            this.type = COMMAND;
         }
 
         if (isNaN(Number(arg))) {

@@ -1,39 +1,193 @@
+import EventEmitter from "events";
 import { isNumber } from "lodash";
 
-class Commands {
-    constructor(stack, functions, emitter, options) {
-        this.stack = stack;
-        this.functions = functions;
-        this.emitter = emitter;
+import { LABEL } from "./node";
+import VmError from "../utils/vmError";
+import Superviser from "./superviser";
+
+export const WAITING = 'WAITING';
+export const COMPLETED = 'COMPLETED';
+export const FAILED = 'FAILED';
+export const INPROGRESS = 'INPROGRESS';
+
+class VMFunction {
+    constructor(name, commands = [], { debug, breakpoints }) {
+        this.name = name;
+        this.commands = commands;
+
+        this.commandsLength = this.commands.length;
+        this.ip = 0;
+        this.localScope = {};
+
+        this.debug = debug;
+        this.breakpoints = breakpoints;
+
+        this.id = Math.round(Math.random() * 50);
+    }
+
+    execute(actions) {
+        // if (this.debug && this.ip < this.commandsLength) {
+        //     if (this.breakpoints) {
+
+        //     }
+        //     this.oneStep(actions);
+        //     this.ip++;
+        // } 
+        
+        // if (!this.debug) {
+        //     while (this.ip < this.commandsLength) {
+        //         this.oneStep(actions);
+        //         if (debug) {
+        //             break;
+        //         }
+        //         this.ip++;
+        //     }
+        // }
+
+        console.log('before whille', this.ip, this.id);
+        while (this.ip < this.commandsLength) {
+            // console.log(this.ip);
+            this.oneStep(actions);
+            if (this.debug) {
+                const cmd = this.commands[this.ip++];
+                console.log('increment: ', cmd.value, this.ip, this.id, this.name);
+
+                if (this.breakpoints) {
+                    if (this.breakpoints.includes(cmd.globalString)) {
+                        console.log(this.breakpoints, this.breakpoints.includes(cmd.globalString));
+                        console.log('execute: ', cmd.globalString);
+                        console.log('execute: ', this.commands[this.ip]);
+                        console.log('execute: ', this.ip);
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                this.ip++;
+            }
+
+            // this.oneStep(actions);
+            // console.log('ip: ', this.ip);
+            // this.ip++;
+        }
+    }
+
+    oneStep(actions) {
+        const cmd = this.commands[this.ip];
+
+        if (cmd.type === LABEL) return;
+
+        if (cmd.value.includes('if')) {
+            if (actions[cmd.value]()) {
+                this.ip = this.findStringByLabel(cmd.arg, cmd.globalString);
+                return;
+            }
+        } else if (cmd.value.includes('ret')) {
+            actions[cmd.value](this.fnName);
+        } else {
+            // console.log(cmd.value);
+            actions[cmd.value](cmd.arg, this.localScope);
+        }
+    }
+
+    findStringByLabel(label, numberOfString) {
+        const foundedLabel = this.commands
+            .filter(cmd => cmd.type === LABEL)
+            .find(cmd => cmd.value === `${label}`);
+
+        if (foundedLabel) {
+            return foundedLabel.localString;
+        }
+
+        throw new VmError(numberOfString, `Label "${label}" not found`);
+    }
+}
+
+class VM extends EventEmitter {
+    constructor(options) {
+        super();
+
+        this.stack = new Superviser();
+        this.functions = {};
         this.options = options;
+
+        this.currentFunction = null;
+
+        this.status = WAITING;
+    }
+
+    setFunctions(functions) {
+        this.functions = functions;
+    }
+
+    getStatus() {
+        return this.status;
+    }
+
+    execute(fnName) {
+        const fn = this.functions[fnName];
+        this.currentFunction = new VMFunction(fnName, fn.commands, this.options);
+        this.currentFunction.execute(this);
+        this.setStatus(WAITING);
+    }
+
+    start() {
+        this.setStatus(INPROGRESS);
+
+        try {
+            this.call('main');
+        } catch (error) {
+            this.setStatus(FAILED);
+            throw error;
+        }
+    }
+
+    next() {
+        if (this.status !== WAITING) {
+            return this.status;
+        } else {
+            this.setStatus(INPROGRESS);
+            this.currentFunction.execute(this);
+            this.setStatus(WAITING);
+        }
+
+        return this.status;
+    }
+
+    setStatus(status) {
+        console.log('setStatus: ', status);
+        if (this.status !== COMPLETED && this.status !== FAILED) {
+            this.status = status;
+        }
     }
 
     end() {
-        this.emitter.emit('finish', {
+        console.log('end');
+        this.emit('finish', {
             dataStack: this.stack.getState()
         });
+
+        this.setStatus(COMPLETED);
     }
 
-    ret(fnName) {
-        this.emitter.emit('ret', {
-            dataStack: this.stack.getState(),
-            fromFunction: fnName
-        });
+    ret() {
+        this.currentFunction = this.stack.popFunction();
+        console.log('ID: ', this.currentFunction.id);
     }
 
-    async call(fnName) {
-        const fn = this.functions[fnName];
-        const executor = new FunctionExecutor(fnName, fn, this.options);
-        // executor.execute(this);
-        await executor.execute(this);
-        console.log('azazazazazaza')
+    call(fnName) {
+        console.log('this.currentFunction', this.currentFunction && this.currentFunction.id);
+        if (this.currentFunction) {
+            this.stack.pushFunction(this.currentFunction);
+        }
+        this.execute(fnName);
     }
 
     push(arg, context) {
         if (isNumber(arg)) {
             this.stack.push(arg);
         } else {
-            console.log('push: ', context, arg);
             this.stack.push(context[arg]);
         }
     }
@@ -76,7 +230,7 @@ class Commands {
     callext(fnName) {
         const value = this.stack.pop();
         if (this.eventNames().includes(fnName)) {
-            this.emitter.emit(fnName, value);
+            this.emit(fnName, value);
         }
     }
 
@@ -95,59 +249,4 @@ class Commands {
     }
 }
 
-class FunctionExecutor {
-    constructor(fnName, cmds, { debug, breakpoints }) {
-        this.cmds = cmds;
-        this.fnName = fnName;
-        this.localScope = {};
-
-        this.debug = debug;
-        this.breakpoints = breakpoints;
-
-        // console.log(this.cmds);
-    }
-
-    async execute(actions) {
-        let counter = 0;
-
-        for (let i = 0; i < this.cmds.length; i++) {
-            await new Promise((resolve, reject) => {
-                // if (this.degug) {
-                //     actions.on('next', resolve);
-                // } else {
-                //     resolve();
-                // }
-                setTimeout(resolve, 3000); 
-            });
-
-            const [globalStringNumber, cmd] = this.cmds[i];
-            console.log(cmd, counter);
-            console.log(actions[cmd.value]);
-
-            // if (counter === 6) {
-            //     return;
-            // }
-            counter++;
-
-            if (cmd.type === 'label') continue;
-
-            if (cmd.value.includes('if')) {
-                if (actions[cmd.value]()) {
-                    const label = this.cmds
-                        .filter(x => x.type === 'label')
-                        .find(x => x.value === cmd.arg + ':');
-
-                    if (label) {
-                        i = label.stringNumber;
-                    }
-                }
-            } else if (cmd.value.includes('ret')) {
-                actions[cmd.value](this.fnName);
-            } else {
-                actions[cmd.value](cmd.arg, this.localScope);
-            }
-        }
-    }
-}
-
-export default Commands;
+export default VM;
