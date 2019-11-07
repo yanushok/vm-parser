@@ -1,5 +1,6 @@
-export default class VmError {
+export default class VmError extends Error {
     constructor(line, msg) {
+        super();
         this.line = line;
         this.msg = msg;
     }

@@ -3,22 +3,27 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = exports.COMMAND = exports.LABEL = void 0;
 
 var _fp = require("lodash/fp");
+
+const LABEL = 'LABEL';
+exports.LABEL = LABEL;
+const COMMAND = 'COMMAND';
+exports.COMMAND = COMMAND;
 
 class Node {
   constructor(value, i, globalString) {
     const [cmd, arg] = (0, _fp.pipe)((0, _fp.split)(' '), (0, _fp.map)(_fp.trim))(value);
     this.value = cmd;
-    this.stringNumber = i;
+    this.localString = i;
     this.globalString = globalString;
 
     if (this.value.includes(':')) {
-      this.type = 'label';
+      this.type = LABEL;
       this.value = this.value.split(':')[0];
     } else {
-      this.type = 'command';
+      this.type = COMMAND;
     }
 
     if (isNaN(Number(arg))) {

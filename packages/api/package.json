@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node ./dist/server.js",
-    "start:dev": "cross-env DEBUG=vm-parse:api NODE_ENV=development nodemon --watch ../parser --exec babel-node ./src/server.js",
+    "start:dev": "cross-env DEBUG=vm-parse:api NODE_ENV=development nodemon --exec babel-node ./src/server.js",
     "build": "babel src --out-dir dist --copy-files"
   },
   "license": "MIT",

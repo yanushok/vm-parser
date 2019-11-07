@@ -22,7 +22,8 @@ function factorial
    mul               # получим произведение первого аргумента, т.е. n, на n-1, полученное после предыдущего вызова оператора.
 lbl:
    ret        # возвращаем управление в вызывающую функцию
-`; // const code = `
+`; // const code = '# Нумерация строк в программе начинается с 1. Для того чтобы завершить программу на передать управление на строку с номером 0.\n#asd546\nfunction main    # функция, с которой начинается выполнение программы\npush 1       # оператор push кладет на вершину стэка целое число или значение переменной\ncall factorial   # вызов функции факториала с параметров 3\ncallext out      # вызов внешней функции вывода на консоль числа, которое находится на вершине стэка\nend              # завершение исполнения\n#sdfsdf\nfunction factorial\ndup               # продублируем вершину стэка\npush 1          # положим в стэк 1\nifeq lbl            # проверим является ли значение первого и единственного аргумента равным единицы, если да, тогда переходим к метки возврата\ndup             # не равен единице, значит продублируем его значение опять на вершине стэка - первый аргумент для sub\npush 1          # положим в стэк 1 - второй аргумент для sub\nsub               # уменьшим значение копии первого аргумента на единицу  \ncall factorial  # вызовем рекурсивного факториал для полученной разницы\nmul               # получим произведение первого аргумента, т.е. n, на n-1, полученное после предыдущего вызова оператора.\nlbl:\nret        # возвращаем управление в вызывающую функцию';
+// const code = `
 // # Нумерация строк в программе начинается с 1. Для того чтобы завершить программу на передать управление на строку с номером 0. 
 // function main    # функция, с которой начинается выполнение программы
 //    push 5           # оператор push кладет на вершину стэка целое число или значение переменной
@@ -32,8 +33,21 @@ lbl:
 //    callext out
 //    end            # завершение исполнения
 // `;
+// export const createTask = () => {
+//    const parserObj = parser(code);
+//    try {
+//        parserObj.parse();
+//    } catch (errors) {
+//       return errors.forEach(err => console.log(err.toString()));
+//    }
+//    parserObj.interpret().then();
+// };
+// createTask();
 
-let p = (0, _parser.parser)(code);
+let p = (0, _parser.parser)(code, {
+  debug: true,
+  breakpoints: [6]
+});
 
 try {
   p.parse();
@@ -42,7 +56,21 @@ try {
   console.log(error);
 }
 
-p.interpret().then(console.log).catch(err => {
-  console.log('azaza');
+p.subscribe('finish', data => console.log('finish: ', data));
+p.subscribe('out', data => console.log('out: ', data));
+p.interpret().then(data => {
+  console.log('interpret: ', data);
+  return p.next();
+}).then(data => {
+  console.log('next: ', data); // return p.next();
+}) // .then((data) => {
+//    console.log('next: ', data);
+//    return p.next();
+// })
+// .then((data) => {
+//    console.log('next: ', data);
+// })
+.catch(err => {
+  console.log('errorrrrrrrrrrrrrrr');
   console.log(err);
 });

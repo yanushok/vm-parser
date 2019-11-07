@@ -4,6 +4,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "start": "yarn start:dev",
     "start:dev": "run-p start:dev:*",
     "start:dev:parser": "yarn workspace @vm-parser/parser build:w",
     "start:dev:api": "yarn workspace @vm-parser/api start:dev",

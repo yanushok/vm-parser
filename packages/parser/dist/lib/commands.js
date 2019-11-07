@@ -3,44 +3,183 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = exports.INPROGRESS = exports.FAILED = exports.COMPLETED = exports.WAITING = void 0;
+
+var _events = _interopRequireDefault(require("events"));
 
 var _lodash = require("lodash");
 
-class Commands {
-  constructor(stack, functions, emitter, options) {
-    this.stack = stack;
-    this.functions = functions;
-    this.emitter = emitter;
+var _node = require("./node");
+
+var _vmError = _interopRequireDefault(require("../utils/vmError"));
+
+var _superviser = _interopRequireDefault(require("./superviser"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const WAITING = 'WAITING';
+exports.WAITING = WAITING;
+const COMPLETED = 'COMPLETED';
+exports.COMPLETED = COMPLETED;
+const FAILED = 'FAILED';
+exports.FAILED = FAILED;
+const INPROGRESS = 'INPROGRESS';
+exports.INPROGRESS = INPROGRESS;
+
+class VMFunction {
+  constructor(name, commands = [], {
+    debug,
+    breakpoints
+  }) {
+    this.name = name;
+    this.commands = commands;
+    this.commandsLength = this.commands.length;
+    this.ip = 0;
+    this.localScope = {};
+    this.debug = debug;
+    this.breakpoints = breakpoints;
+    this.id = Math.round(Math.random() * 50);
+  }
+
+  execute(actions) {
+    while (this.ip < this.commandsLength) {
+      this.oneStep(actions);
+
+      if (this.debug) {
+        const cmd = this.commands[this.ip++];
+
+        if (this.breakpoints) {
+          if (this.breakpoints.includes(cmd.globalString)) {
+            return;
+          }
+        } else {
+          return;
+        }
+      } else {
+        this.ip++;
+      }
+    }
+  }
+
+  oneStep(actions) {
+    const cmd = this.commands[this.ip];
+    if (cmd.type === _node.LABEL) return;
+
+    if (cmd.value.includes('if')) {
+      if (actions[cmd.value]()) {
+        this.ip = this.findStringByLabel(cmd.arg, cmd.globalString);
+        return;
+      }
+    } else if (cmd.value.includes('ret')) {
+      actions[cmd.value](this.fnName);
+    } else {
+      actions[cmd.value](cmd.arg, this.localScope);
+    }
+  }
+
+  findStringByLabel(label, numberOfString) {
+    const foundedLabel = this.commands.filter(cmd => cmd.type === _node.LABEL).find(cmd => cmd.value === `${label}`);
+
+    if (foundedLabel) {
+      return foundedLabel.localString;
+    }
+
+    throw new _vmError.default(numberOfString, `Label "${label}" not found`);
+  }
+
+}
+
+class VM extends _events.default {
+  constructor(options) {
+    super();
+    this.stack = new _superviser.default();
+    this.functions = {};
     this.options = options;
+    this.currentFunction = null;
+    this.status = WAITING;
+    this.result = null;
+  }
+
+  setFunctions(functions) {
+    this.functions = functions;
+  }
+
+  getStatus() {
+    const status = {
+      status: this.status
+    };
+
+    if (this.status === WAITING) {
+      status.stack = this.stack.getState();
+    } else if (this.status === COMPLETED) {
+      status.result = this.result;
+    } else if (this.status === INPROGRESS) {
+      status.err = 'Task in progress at the moment';
+    }
+
+    return status;
+  }
+
+  execute(fnName) {
+    const fn = this.functions[fnName];
+    this.currentFunction = new VMFunction(fnName, fn.commands, this.options);
+    this.currentFunction.execute(this);
+    this.setStatus(WAITING);
+  }
+
+  start() {
+    this.setStatus(INPROGRESS);
+
+    try {
+      this.call('main');
+    } catch (error) {
+      this.setStatus(FAILED);
+      throw error;
+    }
+  }
+
+  next() {
+    if (this.status !== WAITING) {
+      return this.status;
+    } else {
+      this.setStatus(INPROGRESS);
+      this.currentFunction.execute(this);
+      this.setStatus(WAITING);
+    }
+
+    return this.status;
+  }
+
+  setStatus(status) {
+    if (this.status !== COMPLETED && this.status !== FAILED) {
+      this.status = status;
+    }
   }
 
   end() {
-    this.emitter.emit('finish', {
+    this.emit('finish', {
       dataStack: this.stack.getState()
     });
+    this.result = this.stack.pop();
+    this.setStatus(COMPLETED);
   }
 
-  ret(fnName) {
-    this.emitter.emit('ret', {
-      dataStack: this.stack.getState(),
-      fromFunction: fnName
-    });
+  ret() {
+    this.currentFunction = this.stack.popFunction();
   }
 
-  async call(fnName) {
-    const fn = this.functions[fnName];
-    const executor = new FunctionExecutor(fnName, fn, this.options); // executor.execute(this);
+  call(fnName) {
+    if (this.currentFunction) {
+      this.stack.pushFunction(this.currentFunction);
+    }
 
-    await executor.execute(this);
-    console.log('azazazazazaza');
+    this.execute(fnName);
   }
 
   push(arg, context) {
     if ((0, _lodash.isNumber)(arg)) {
       this.stack.push(arg);
     } else {
-      console.log('push: ', context, arg);
       this.stack.push(context[arg]);
     }
   }
@@ -57,101 +196,50 @@ class Commands {
   }
 
   add(arg, context) {
-    const first = this.stack.pop();
-    const second = this.stack.pop();
-    this.push(first + second, context);
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    this.push(left + right, context);
   }
 
   sub(arg, context) {
-    const second = this.stack.pop();
-    const first = this.stack.pop();
-    this.push(first - second, context);
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    this.push(left - right, context);
   }
 
   mul(arg, context) {
-    const first = this.stack.pop();
-    const second = this.stack.pop();
-    this.push(first * second, context);
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    this.push(left * right, context);
   }
 
   div(arg, context) {
-    const second = this.stack.pop();
-    const first = this.stack.pop();
-    this.push(Math.round(first / second), context);
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    this.push(Math.round(left / right), context);
   }
 
   callext(fnName) {
-    const value = this.stack.pop();
+    const value = this.stack.getTopValue();
 
     if (this.eventNames().includes(fnName)) {
-      this.emitter.emit(fnName, value);
+      this.emit(fnName, value);
     }
   }
 
   ifeq() {
-    const first = this.stack.pop();
-    const second = this.stack.pop();
-    return first === second;
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    return left === right;
   }
 
   ifgr() {
-    const second = this.stack.pop();
-    const first = this.stack.pop();
-    return first > second;
+    const right = this.stack.pop();
+    const left = this.stack.pop();
+    return left > right;
   }
 
 }
 
-class FunctionExecutor {
-  constructor(fnName, cmds, {
-    debug,
-    breakpoints
-  }) {
-    this.cmds = cmds;
-    this.fnName = fnName;
-    this.localScope = {};
-    this.debug = debug;
-    this.breakpoints = breakpoints; // console.log(this.cmds);
-  }
-
-  async execute(actions) {
-    let counter = 0;
-
-    for (let i = 0; i < this.cmds.length; i++) {
-      await new Promise((resolve, reject) => {
-        // if (this.degug) {
-        //     actions.on('next', resolve);
-        // } else {
-        //     resolve();
-        // }
-        setTimeout(resolve, 3000);
-      });
-      const [globalStringNumber, cmd] = this.cmds[i];
-      console.log(cmd, counter);
-      console.log(actions[cmd.value]); // if (counter === 6) {
-      //     return;
-      // }
-
-      counter++;
-      if (cmd.type === 'label') continue;
-
-      if (cmd.value.includes('if')) {
-        if (actions[cmd.value]()) {
-          const label = this.cmds.filter(x => x.type === 'label').find(x => x.value === cmd.arg + ':');
-
-          if (label) {
-            i = label.stringNumber;
-          }
-        }
-      } else if (cmd.value.includes('ret')) {
-        actions[cmd.value](this.fnName);
-      } else {
-        actions[cmd.value](cmd.arg, this.localScope);
-      }
-    }
-  }
-
-}
-
-var _default = Commands;
+var _default = VM;
 exports.default = _default;

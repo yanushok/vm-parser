@@ -5,8 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-class VmError {
+class VmError extends Error {
   constructor(line, msg) {
+    super();
     this.line = line;
     this.msg = msg;
   }

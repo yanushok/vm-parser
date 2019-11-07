@@ -1,9 +1,7 @@
-import EventEmitter from 'events';
 import { pipe, trim, split, head, last } from "lodash/fp";
 import _ from 'lodash';
 
 import Node from './node';
-import Superviser from './superviser';
 import VmError from '../utils/vmError';
 import { isCommand, isNarrowCommand, isWideCommand } from "../utils/commands";
 import VM from './commands';

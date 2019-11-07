@@ -24,6 +24,10 @@ class Superviser {
         return this._mainStack;
     }
 
+    getTopValue() {
+        return this._mainStack[this._mainStack.length - 1];
+    }
+
     pushFunction(fn) {
         this._functionsStack.push(fn);
     }

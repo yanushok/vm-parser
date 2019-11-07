@@ -5,26 +5,24 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.parser = parser;
 
-var _events = _interopRequireDefault(require("events"));
-
 var _fp = require("lodash/fp");
 
 var _lodash = _interopRequireDefault(require("lodash"));
 
 var _node = _interopRequireDefault(require("./node"));
 
-var _superviser = _interopRequireDefault(require("./superviser"));
-
 var _vmError = _interopRequireDefault(require("../utils/vmError"));
 
 var _commands = require("../utils/commands");
+
+var _commands2 = _interopRequireDefault(require("./commands"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function codeParser(tuples = []) {
   function tupleReducer(state, [number, command]) {
     if (command.includes('function')) {
-      return [...state, [command.split(' ').pop()]];
+      return [...state, [[number, command.split(' ').pop()]]];
     } else {
       const len = state.length;
 
@@ -37,9 +35,12 @@ function codeParser(tuples = []) {
     }
   }
 
-  function functionsReducer(state, [functionName, ...commands]) {
+  function functionsReducer(state, [[number, functionName], ...commands]) {
     return { ...state,
-      [functionName]: commands.map(([numOfString, cmdString], i) => [numOfString, new _node.default(cmdString, i, numOfString)])
+      [functionName]: {
+        string: number,
+        commands: commands.map(([numOfString, cmdString], i) => new _node.default(cmdString, i, numOfString))
+      }
     };
   }
 
@@ -57,7 +58,14 @@ function checkErrors(tuples = []) {
     const [cmd, arg, ...rest] = instruction.split(' ').filter(x => x.length);
     const mnemonic = cmd.toLowerCase();
     if (mnemonic === '') return;
-    if (mnemonic[mnemonic.length - 1] === ':') return;
+
+    if (mnemonic[mnemonic.length - 1] === ':') {
+      if (arg) {
+        errors.push(new _vmError.default(line, `Label must not have any arguments`));
+      }
+
+      return;
+    }
 
     if (!(0, _commands.isCommand)(mnemonic)) {
       errors.push(new _vmError.default(line, `Unknown opcode "${mnemonic}"`));
@@ -83,29 +91,35 @@ function checkErrors(tuples = []) {
 }
 
 function parser(instructions, opts = {}) {
-  let tuples = [];
-  let functionsObject = {};
   let hasErrors = false;
-  const emitter = new _events.default();
-  const mainStack = new _superviser.default();
   const options = Object.assign({}, {
     debug: false,
     breakpoints: null
   }, opts);
+  const vm = new _commands2.default(options);
 
   function emit(...args) {
-    emitter.emit(...args);
+    vm.emit(...args);
+  }
+
+  function subscribe(...args) {
+    vm.on(...args);
+  }
+
+  function getStatus() {
+    return vm.getStatus();
   }
 
   function parse() {
-    tuples = createTuples(instructions);
+    const tuples = createTuples(instructions);
     const errors = checkErrors(tuples);
 
     if (errors.length) {
       hasErrors = true;
       throw errors;
     } else {
-      functionsObject = codeParser(tuples);
+      const functionsObject = codeParser(tuples);
+      vm.setFunctions(functionsObject);
     }
   }
 
@@ -117,7 +131,7 @@ function parser(instructions, opts = {}) {
 
       setImmediate(() => {
         try {
-          resolve();
+          resolve(vm.next());
         } catch (err) {
           reject(err.message);
         }
@@ -133,7 +147,8 @@ function parser(instructions, opts = {}) {
         }
 
         try {
-          resolve(functionsObject);
+          vm.start();
+          resolve();
         } catch (err) {
           reject(err);
         }
@@ -143,7 +158,9 @@ function parser(instructions, opts = {}) {
 
   return {
     interpret,
+    subscribe,
     next,
-    parse
+    parse,
+    getStatus
   };
 }

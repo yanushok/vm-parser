@@ -1,17 +1,19 @@
 import { Router } from 'express';
-import { parseVmCode } from "../controllers/parser.controller";
+import * as taskController from "../controllers/task.controller";
 
 const router = Router();
 
-router.get('/task', (req, res) => { res.status(200).send('/task'); });
-router.route('/task/:id')
-    .get((req, res) => { res.status(200).send(`/task/${req.params.id}`); })
-    .post((req, res) => {})
-    .delete((req, res) => {});
-    
-router.post('/continue/:id', (req, res) => {});
-router.get('/status/:id', (req, res) => {});
+router.route('/task')
+    .get(taskController.listOfTasks)
+    .post(taskController.createTask);
 
-router.post('/parse', parseVmCode);
+router.route('/task/:taskId')
+    .get(taskController.getTask)
+    .delete(taskController.removeTask);
+    
+router.post('/continue/:taskId', taskController.continueTask);
+router.get('/status/:taskId', taskController.getTaskStatus);
+
+router.param('taskId', taskController.getTaskById);
 
 export default router;

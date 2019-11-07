@@ -26,38 +26,13 @@ class VMFunction {
     }
 
     execute(actions) {
-        // if (this.debug && this.ip < this.commandsLength) {
-        //     if (this.breakpoints) {
-
-        //     }
-        //     this.oneStep(actions);
-        //     this.ip++;
-        // } 
-        
-        // if (!this.debug) {
-        //     while (this.ip < this.commandsLength) {
-        //         this.oneStep(actions);
-        //         if (debug) {
-        //             break;
-        //         }
-        //         this.ip++;
-        //     }
-        // }
-
-        console.log('before whille', this.ip, this.id);
         while (this.ip < this.commandsLength) {
-            // console.log(this.ip);
             this.oneStep(actions);
             if (this.debug) {
                 const cmd = this.commands[this.ip++];
-                console.log('increment: ', cmd.value, this.ip, this.id, this.name);
 
                 if (this.breakpoints) {
                     if (this.breakpoints.includes(cmd.globalString)) {
-                        console.log(this.breakpoints, this.breakpoints.includes(cmd.globalString));
-                        console.log('execute: ', cmd.globalString);
-                        console.log('execute: ', this.commands[this.ip]);
-                        console.log('execute: ', this.ip);
                         return;
                     }
                 } else {
@@ -66,10 +41,6 @@ class VMFunction {
             } else {
                 this.ip++;
             }
-
-            // this.oneStep(actions);
-            // console.log('ip: ', this.ip);
-            // this.ip++;
         }
     }
 
@@ -86,7 +57,6 @@ class VMFunction {
         } else if (cmd.value.includes('ret')) {
             actions[cmd.value](this.fnName);
         } else {
-            // console.log(cmd.value);
             actions[cmd.value](cmd.arg, this.localScope);
         }
     }
@@ -115,6 +85,7 @@ class VM extends EventEmitter {
         this.currentFunction = null;
 
         this.status = WAITING;
+        this.result = null;
     }
 
     setFunctions(functions) {
@@ -122,7 +93,19 @@ class VM extends EventEmitter {
     }
 
     getStatus() {
-        return this.status;
+        const status = {
+            status: this.status
+        };
+
+        if (this.status === WAITING) {
+            status.stack = this.stack.getState();
+        } else if(this.status === COMPLETED) {
+            status.result = this.result;
+        } else if(this.status === INPROGRESS) {
+            status.err = 'Task in progress at the moment'
+        }
+
+        return status;
     }
 
     execute(fnName) {
@@ -156,28 +139,25 @@ class VM extends EventEmitter {
     }
 
     setStatus(status) {
-        console.log('setStatus: ', status);
         if (this.status !== COMPLETED && this.status !== FAILED) {
             this.status = status;
         }
     }
 
     end() {
-        console.log('end');
         this.emit('finish', {
             dataStack: this.stack.getState()
         });
 
+        this.result = this.stack.pop();
         this.setStatus(COMPLETED);
     }
 
     ret() {
         this.currentFunction = this.stack.popFunction();
-        console.log('ID: ', this.currentFunction.id);
     }
 
     call(fnName) {
-        console.log('this.currentFunction', this.currentFunction && this.currentFunction.id);
         if (this.currentFunction) {
             this.stack.pushFunction(this.currentFunction);
         }
@@ -204,48 +184,48 @@ class VM extends EventEmitter {
     }
 
     add(arg, context) {
-        const first = this.stack.pop();
-        const second = this.stack.pop();
-        this.push(first + second, context);
+        const right = this.stack.pop();
+        const left = this.stack.pop();
+        this.push(left + right, context);
     }
 
     sub(arg, context) {
-        const second = this.stack.pop();
-        const first = this.stack.pop();
-        this.push(first - second, context);
+        const right = this.stack.pop();
+        const left = this.stack.pop();
+        this.push(left - right, context);
     }
 
     mul(arg, context) {
-        const first = this.stack.pop();
-        const second = this.stack.pop();
-        this.push(first * second, context);
+        const right = this.stack.pop();
+        const left = this.stack.pop();
+        this.push(left * right, context);
     }
 
     div(arg, context) {
-        const second = this.stack.pop();
-        const first = this.stack.pop();
-        this.push(Math.round(first / second), context);
+        const right = this.stack.pop();
+        const left = this.stack.pop();
+        this.push(Math.round(left / right), context);
     }
 
     callext(fnName) {
-        const value = this.stack.pop();
+        const value = this.stack.getTopValue();
         if (this.eventNames().includes(fnName)) {
             this.emit(fnName, value);
         }
     }
 
     ifeq() {
-        const first = this.stack.pop();
-        const second = this.stack.pop();
+        const right = this.stack.pop();
+        const left = this.stack.pop();
 
-        return first === second;
+        return left === right;
     }
 
     ifgr() {
-        const second = this.stack.pop();
-        const first = this.stack.pop();
+        const right = this.stack.pop();
+        const left = this.stack.pop();
 
-        return first > second;
+        return left > right;
     }
 }
 
