@@ -39,7 +39,7 @@ function codeParser(tuples = []) {
     return { ...state,
       [functionName]: {
         string: number,
-        commands: commands.map(([numOfString, cmdString], i) => new _node.default(cmdString, i, numOfString))
+        commands: commands.map(([numOfString, cmdString], localIndex) => new _node.default(cmdString, localIndex, numOfString))
       }
     };
   }

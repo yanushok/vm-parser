@@ -13,10 +13,10 @@ const COMMAND = 'COMMAND';
 exports.COMMAND = COMMAND;
 
 class Node {
-  constructor(value, i, globalString) {
+  constructor(value, localString, globalString) {
     const [cmd, arg] = (0, _fp.pipe)((0, _fp.split)(' '), (0, _fp.map)(_fp.trim))(value);
     this.value = cmd;
-    this.localString = i;
+    this.localString = localString;
     this.globalString = globalString;
 
     if (this.value.includes(':')) {

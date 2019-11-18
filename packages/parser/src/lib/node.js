@@ -4,14 +4,14 @@ export const LABEL = 'LABEL';
 export const COMMAND = 'COMMAND';
 
 class Node {
-    constructor(value, i, globalString) {
+    constructor(value, localString, globalString) {
         const [cmd, arg] = pipe(
             split(' '),
             map(trim)
         )(value);
 
         this.value = cmd;
-        this.localString = i;
+        this.localString = localString;
         this.globalString = globalString;
         
         if (this.value.includes(':')) {

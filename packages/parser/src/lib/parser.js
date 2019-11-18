@@ -25,7 +25,7 @@ function codeParser(tuples = []) {
             ...state,
             [functionName]: {
                 string: number,
-                commands: commands.map(([numOfString, cmdString], i) => new Node(cmdString, i, numOfString))
+                commands: commands.map(([numOfString, cmdString], localIndex) => new Node(cmdString, localIndex, numOfString))
             }
         };
     }
