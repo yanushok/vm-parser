@@ -8,9 +8,11 @@
     "start:dev": "run-p start:dev:*",
     "start:dev:parser": "yarn workspace @vm-parser/parser build:w",
     "start:dev:api": "yarn workspace @vm-parser/api start:dev",
+    "start:dev:client": "yarn workspace @vm-parser/client start",
     "build": "run-p build:*",
     "build:parser": "yarn workspace @vm-parser/parser build",
-    "build:api": "yarn workspace @vm-parser/api build"
+    "build:api": "yarn workspace @vm-parser/api build",
+    "build:client": "yarn workspace @vm-parser/client build"
   },
   "workspaces": [
     "packages/*"
