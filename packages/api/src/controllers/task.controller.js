@@ -1,4 +1,4 @@
-import shortid from 'shortid';
+import uuid4 from 'uuid/v4';
 import { parser } from "@vm-parser/parser";
 import * as store from "../services/store.service";
 import { INPROGRESS, COMPLETED, WAITING, FAILED } from '@vm-parser/parser/dist/lib/commands';
@@ -19,7 +19,7 @@ export const getTaskById = (req, res, next, id) => {
 
 export const createTask = (req, res) => {
     const { code, debug, breakpoints } = req.body;
-    const id = shortid.generate();
+    const id = uuid4();
     const parserObj = parser(code, { debug, breakpoints });
 
     store.setTask(id, parserObj);
