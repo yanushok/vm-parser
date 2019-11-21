@@ -1,0 +1,22 @@
+.btn {
+    /* position: relative;
+    font-weight: 600;
+    display: inline-block;
+    text-decoration: none; */
+
+    background: #4dd599;
+    border-radius: 4px;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #34cf8b;
+}
+
+.btn[disabled] {
+    opacity: .5;
+    cursor: not-allowed;
+}
