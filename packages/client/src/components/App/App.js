@@ -15,10 +15,12 @@ function App() {
           <Route path="/add-task" children={<Header>Add Task</Header>} />
         </Switch>
 
-        <Switch>
-          <Route path="/" exact component={MainPage} />
-          <Route path="/add-task" children={<h1>azazazaza</h1>} />
-        </Switch>
+        <main className="main">
+          <Switch>
+            <Route path="/" exact component={MainPage} />
+            <Route path="/add-task" children={<h1>azazazaza</h1>} />
+          </Switch>
+        </main>
       </div>
     </Router>
   );
