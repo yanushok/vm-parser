@@ -6,7 +6,7 @@ import ButtonGroup from "components/ButtonGroup";
 
 import './TaskList.scss';
 
-function TaskList({ tasks }) {
+function TaskList({ tasks, onRefresh }) {
     let content = null;
     const history = useHistory();
 
@@ -45,7 +45,10 @@ function TaskList({ tasks }) {
     return (
         <>
             {content}
-            <Button onClick={addTaskHandler}>Add new task</Button>
+            <ButtonGroup>
+                <Button onClick={addTaskHandler}>Add new task</Button>
+                <Button onClick={onRefresh}>Refresh</Button>
+            </ButtonGroup>
         </>
     );
 }

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import TaskList from 'components/TaskList';
+import { useRequest } from 'hooks/useRequest';
 
 const tasks = [{
     id: 'asdhs-s dfjs d-sdf',
@@ -13,9 +14,20 @@ const tasks = [{
 }];
 
 function MainPage() {
+    const [{ data }, request] = useRequest();
+    console.log('state', data);
+
+    const onRefresh = () => {
+        request('http://localhost:8080/api/task', 'GET');
+    };
+
+    useEffect(() => {
+        request('http://localhost:8080/api/task', 'GET');
+    }, []);
+
     return (
         <>
-            <TaskList tasks={tasks} />
+            <TaskList tasks={data} onRefresh={onRefresh} />
         </>
     );
 }

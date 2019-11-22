@@ -2,36 +2,26 @@
     position: relative;
     display: inline-block;
     overflow: hidden;
-}
 
-.btn-group>button {
-    margin: 0;
-}
+    &:not(.vertical)>button+button {
+        margin-left: 5px;
+    }
 
-.btn-group>button:first-child {
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-}
+    &.vertical {
+        min-width: 100px;
+        display: inline-flex;
+        flex-direction: column;
 
-.btn-group>button:last-child {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-}
+        & > button {
+            display: block;
+        }
 
-.btn-group.vertical {
-    min-width: 100px;
-    display: inline-flex;
-    flex-direction: column;
-}
+        & > button:first-child {
+            border-radius: 5px 5px 0 0;
+        }
 
-.btn-group.vertical>button:first-child {
-    border-radius: 5px 5px 0 0;
-}
-
-.btn-group.vertical>button:last-child {
-    border-radius: 0 0 5px 5px;
-}
-
-.btn-group.vertical>button {
-    display: block;
+        & > button:last-child {
+            border-radius: 0 0 5px 5px;
+        }
+    }
 }
