@@ -67,7 +67,7 @@ export const removeTask = (req, res) => {
         case FAILED:
         case WAITING:
             store.removeTask(req.taskId);
-            res.status(200).end(req.taskId);
+            res.status(200).json({ id: req.taskId });
             break;
         case INPROGRESS:
             res.status(409).end();

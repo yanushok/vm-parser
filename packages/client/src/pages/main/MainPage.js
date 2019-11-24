@@ -1,33 +1,49 @@
-import React, { useEffect } from 'react';
-import TaskList from 'components/TaskList';
-import { useRequest } from 'hooks/useRequest';
+import React, { useEffect, useState } from 'react';
 
-const tasks = [{
-    id: 'asdhs-s dfjs d-sdf',
-    status: 'COMPLETED'
-}, {
-    id: 'asdhs-s d-sdf',
-    status: 'FAILED'
-}, {
-    id: 'asdhs-s dfjs',
-    status: 'WAITING'
-}];
+import TaskList from 'components/TaskList';
+import TasksApi from 'services/tasksApi';
+import { fetchAction, requestingAction } from "actions/taskActions";
+import { useGlobalState } from 'contexts/state';
+import AddTaskModal from 'components/AddTaskModal';
+import Button from "components/Button";
+import ButtonGroup from "components/ButtonGroup";
 
 function MainPage() {
-    const [{ data }, request] = useRequest();
-    console.log('state', data);
+    const { dispatch } = useGlobalState();
+    const [modalIsOpen, setOpen] = useState(false);
 
     const onRefresh = () => {
-        request('http://localhost:8080/api/task', 'GET');
+        dispatch(requestingAction());
+        TasksApi
+            .fetchTasks()
+            .then(fetchAction)
+            .then(dispatch);
     };
 
+    const onSave = data => {
+        TasksApi
+            .addTask(data)
+            .then(onRefresh)
+            .then(() => setOpen(false));
+    }
+
     useEffect(() => {
-        request('http://localhost:8080/api/task', 'GET');
+        onRefresh();
     }, []);
+
+    const onClose = () => setOpen(false);
+    const onOpen = () => setOpen(true);
 
     return (
         <>
-            <TaskList tasks={data} onRefresh={onRefresh} />
+            <TaskList />
+            
+            <ButtonGroup>
+                <Button onClick={onOpen}>Add new task</Button>
+                <Button onClick={onRefresh}>Refresh</Button>
+            </ButtonGroup>
+
+            {modalIsOpen && <AddTaskModal isOpen={modalIsOpen} onSave={onSave} onCloseModal={onClose} />}
         </>
     );
 }

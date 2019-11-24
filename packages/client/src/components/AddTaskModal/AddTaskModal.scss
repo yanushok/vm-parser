@@ -1,0 +1,15 @@
+.add-task {
+    &__form {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    &__codearea {
+        resize: none;
+        display: block;
+        flex-grow: 1;
+        margin-bottom: 8px;
+        font-family: 'monospace', 'consolas';
+    }
+}
