@@ -1,15 +1,34 @@
-.add-task {
-    &__form {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+.add-task-form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .form-group {
+        margin-bottom: 8px;
     }
 
     &__codearea {
-        resize: none;
-        display: block;
         flex-grow: 1;
-        margin-bottom: 8px;
-        font-family: 'monospace', 'consolas';
+
+        textarea {
+            resize: none;
+            width: 100%;
+            height: 100%;
+            font-family: 'monospace', 'consolas';
+        }
+    }
+
+    &__debug-mode, &__breakpoints {
+        [type=checkbox], [type=text] {
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+    }
+
+    &__errors {
+        list-style-type: none;
+        color: red;
+        max-height: 250px;
+        overflow-y: scroll;
     }
 }

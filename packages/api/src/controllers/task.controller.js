@@ -21,14 +21,13 @@ export const createTask = (req, res) => {
     const id = uuid4();
     const parserObj = parser(code, { debug, breakpoints });
 
-    store.setTask(id, parserObj);
-
     try {
         parserObj.parse();
     } catch (err) {
         return res.status(400).json({ errors: err });
     }
 
+    store.setTask(id, parserObj);
     parserObj.interpret().then();
     res.send({ id });
 };

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import Node from './node';
 import VmError from '../utils/vmError';
 import { isCommand, isNarrowCommand, isWideCommand } from "../utils/commands";
-import VM from './commands';
+import VM, { FAILED } from './commands';
 
 function codeParser(tuples = []) {
     function tupleReducer(state, [number, command]) {
@@ -109,6 +109,7 @@ export function parser(instructions, opts = {}) {
 
         if (errors.length) {
             hasErrors = true;
+            vm.setStatus(FAILED);
             throw errors;
         } else {
             const functionsObject = codeParser(tuples);

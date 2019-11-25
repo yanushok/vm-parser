@@ -15,9 +15,7 @@ function TaskList() {
             .then(dispatch);
     }
 
-    if (state && state.loading) {
-        return <h3>loading</h3>;
-    } else if (!state || !state.data || !state.data.length) {
+    if (!state || !state.data || !state.data.length) {
         return <h3>There are not tasks yet</h3>;
     } else {
         return <table className="table">

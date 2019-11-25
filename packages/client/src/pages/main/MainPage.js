@@ -20,11 +20,12 @@ function MainPage() {
             .then(dispatch);
     };
 
-    const onSave = data => {
+    const onSave = (data, onSuccess, onError) => {
         TasksApi
             .addTask(data)
             .then(onRefresh)
-            .then(() => setOpen(false));
+            .then(() => setOpen(false))
+            .catch(err => onError(err));
     }
 
     useEffect(() => {
