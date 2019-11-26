@@ -7,10 +7,12 @@ import { useGlobalState } from 'contexts/state';
 import AddTaskModal from 'components/AddTaskModal';
 import Button from "components/Button";
 import ButtonGroup from "components/ButtonGroup";
+import ShowTaskModal from 'components/ShowTaskModal';
 
 function MainPage() {
     const { dispatch } = useGlobalState();
     const [addModalIsOpen, setAddModalOpen] = useState(false);
+    const [showTaskModalIsOpen, setShowTaskModal] = useState(false);
 
     const onRefresh = useCallback(() => {
         dispatch(requestingAction());
@@ -32,19 +34,26 @@ function MainPage() {
         onRefresh();
     }, [onRefresh]);
 
-    const onClose = () => setAddModalOpen(false);
-    const onOpen = () => setAddModalOpen(true);
+    const onAddModalClose = useCallback(() => setAddModalOpen(false), []);
+    const onAddModalOpen = useCallback(() => setAddModalOpen(true), []);
+
+    const onShowTaskModalClose = useCallback(() => setShowTaskModal(false), []);
+    const onShowTaskModalOpen = useCallback((id) => {
+        console.log(id);
+        setShowTaskModal(true)
+    }, []);
 
     return (
         <>
-            <TaskList />
+            <TaskList onTaskClick={onShowTaskModalOpen} />
             
             <ButtonGroup>
-                <Button onClick={onOpen}>Add new task</Button>
+                <Button onClick={onAddModalOpen}>Add new task</Button>
                 <Button onClick={onRefresh}>Refresh</Button>
             </ButtonGroup>
 
-            {addModalIsOpen && <AddTaskModal isOpen={addModalIsOpen} onSave={onSave} onCloseModal={onClose} />}
+            {addModalIsOpen && <AddTaskModal isOpen={addModalIsOpen} onSave={onSave} onCloseModal={onAddModalClose} />}
+            {showTaskModalIsOpen && <ShowTaskModal isOpen={showTaskModalIsOpen} onCloseModal={onShowTaskModalClose} />}
         </>
     );
 }
