@@ -9,8 +9,3 @@ export function fetchAction({ data }) {
 export function deleteAction({ data }) {
     return { type: 'DELETE_SUCCESS', payload: data.id };
 }
-
-export function addAction({ data }) {
-    console.log(data);
-    return { type: 'ADD_SUCCESS' };
-}

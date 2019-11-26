@@ -19,7 +19,7 @@ const reducer = (state, action) => {
     switch (action.type) {
         case 'DELETE_SUCCESS':
             const data = state.data.filter(el => el.id !== action.payload);
-            return { ...state, loading: false,  data };
+            return { ...state, loading: false, data };
         case 'REQUESTING':
             return { ...state, loading: true, error: null };
         case 'FETCH_SUCCESS':

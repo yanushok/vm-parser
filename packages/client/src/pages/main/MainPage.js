@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import TaskList from 'components/TaskList';
 import TasksApi from 'services/tasksApi';
@@ -10,30 +10,30 @@ import ButtonGroup from "components/ButtonGroup";
 
 function MainPage() {
     const { dispatch } = useGlobalState();
-    const [modalIsOpen, setOpen] = useState(false);
+    const [addModalIsOpen, setAddModalOpen] = useState(false);
 
-    const onRefresh = () => {
+    const onRefresh = useCallback(() => {
         dispatch(requestingAction());
         TasksApi
             .fetchTasks()
             .then(fetchAction)
             .then(dispatch);
-    };
+    }, [dispatch]);
 
     const onSave = (data, onSuccess, onError) => {
         TasksApi
             .addTask(data)
             .then(onRefresh)
-            .then(() => setOpen(false))
+            .then(() => setAddModalOpen(false))
             .catch(err => onError(err));
     }
 
     useEffect(() => {
         onRefresh();
-    }, []);
+    }, [onRefresh]);
 
-    const onClose = () => setOpen(false);
-    const onOpen = () => setOpen(true);
+    const onClose = () => setAddModalOpen(false);
+    const onOpen = () => setAddModalOpen(true);
 
     return (
         <>
@@ -44,7 +44,7 @@ function MainPage() {
                 <Button onClick={onRefresh}>Refresh</Button>
             </ButtonGroup>
 
-            {modalIsOpen && <AddTaskModal isOpen={modalIsOpen} onSave={onSave} onCloseModal={onClose} />}
+            {addModalIsOpen && <AddTaskModal isOpen={addModalIsOpen} onSave={onSave} onCloseModal={onClose} />}
         </>
     );
 }

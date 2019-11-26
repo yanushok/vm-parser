@@ -16,7 +16,7 @@ function TaskList() {
     }
 
     if (!state || !state.data || !state.data.length) {
-        return <h3>There are not tasks yet</h3>;
+        return <h3>There are no tasks yet</h3>;
     } else {
         return <table className="table">
             <thead>
