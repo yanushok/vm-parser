@@ -25,7 +25,7 @@ function AddTaskModal({ isOpen, onCloseModal, onSave }) {
         const data = {
             code: code.trim(),
             debug: isDebug,
-            breakpoints: breakpoints.split(',').map(Number)
+            breakpoints: breakpoints ? breakpoints.split(',').map(Number) : null
         };
 
         onSave(data, null, (err) => {

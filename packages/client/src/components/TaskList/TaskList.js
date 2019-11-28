@@ -7,7 +7,7 @@ import { deleteAction } from "actions/taskActions";
 
 function TaskList({ onTaskClick }) {
     const { state, dispatch } = useGlobalState();
-    
+
     const deleteHandler = id => e => {
         TasksApi
             .deleteTask(id)
@@ -15,13 +15,10 @@ function TaskList({ onTaskClick }) {
             .then(dispatch);
     }
 
-    const taskClickHandler = useCallback(id => e => {
-        console.log('render 1');
+    const taskClickHandler = useCallback(task => e => {
         e.preventDefault();
-        onTaskClick(id);
+        onTaskClick(task);
     }, [onTaskClick]);
-
-    console.log('render 2');
 
     if (!state || !state.data || !state.data.length) {
         return <h3>There are no tasks yet</h3>;
@@ -38,7 +35,7 @@ function TaskList({ onTaskClick }) {
                 {state.data.map(task => (
                     <tr key={task.id}>
                         <td>
-                            <a href="/" onClick={taskClickHandler(task.id)}>{task.id}</a>
+                            <a href="/" onClick={taskClickHandler(task)}>{task.id}</a>
                         </td>
                         <td>{task.status}</td>
                         <td>

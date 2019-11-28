@@ -13,6 +13,7 @@ function MainPage() {
     const { dispatch } = useGlobalState();
     const [addModalIsOpen, setAddModalOpen] = useState(false);
     const [showTaskModalIsOpen, setShowTaskModal] = useState(false);
+    const [currentTask, setCurrentTask] = useState(null);
 
     const onRefresh = useCallback(() => {
         dispatch(requestingAction());
@@ -30,6 +31,13 @@ function MainPage() {
             .catch(err => onError(err));
     }
 
+    const onContinue = (id) => {
+        TasksApi
+            .continue(id)
+            .then(onShowTaskModalClose)
+            .then(onRefresh);
+    }
+
     useEffect(() => {
         onRefresh();
     }, [onRefresh]);
@@ -37,23 +45,26 @@ function MainPage() {
     const onAddModalClose = useCallback(() => setAddModalOpen(false), []);
     const onAddModalOpen = useCallback(() => setAddModalOpen(true), []);
 
-    const onShowTaskModalClose = useCallback(() => setShowTaskModal(false), []);
-    const onShowTaskModalOpen = useCallback((id) => {
-        console.log(id);
-        setShowTaskModal(true)
+    const onShowTaskModalClose = useCallback(() => {
+        setShowTaskModal(false);
+        setCurrentTask(null);
+    }, []);
+    const onShowTaskModalOpen = useCallback(task => {
+        setCurrentTask(task);
+        setShowTaskModal(true);
     }, []);
 
     return (
         <>
             <TaskList onTaskClick={onShowTaskModalOpen} />
-            
+
             <ButtonGroup>
                 <Button onClick={onAddModalOpen}>Add new task</Button>
                 <Button onClick={onRefresh}>Refresh</Button>
             </ButtonGroup>
 
             {addModalIsOpen && <AddTaskModal isOpen={addModalIsOpen} onSave={onSave} onCloseModal={onAddModalClose} />}
-            {showTaskModalIsOpen && <ShowTaskModal isOpen={showTaskModalIsOpen} onCloseModal={onShowTaskModalClose} />}
+            {showTaskModalIsOpen && <ShowTaskModal isOpen={showTaskModalIsOpen} onContinue={onContinue} taskId={currentTask.id} onCloseModal={onShowTaskModalClose} />}
         </>
     );
 }
