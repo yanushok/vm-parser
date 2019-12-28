@@ -3,13 +3,13 @@ const NarrowInstructions = ['end', 'dup', 'add', 'mul', 'sub', 'div', 'ret'];
 const WideInstructions = ['push', 'pop', 'call', 'function', 'callext', 'ifeq', 'ifgr'];
 
 export function isCommand(cmd) {
-    return AvailableCommands.includes(cmd);
+  return AvailableCommands.includes(cmd);
 }
 
 export function isNarrowCommand(cmd) {
-    return NarrowInstructions.includes(cmd);
+  return NarrowInstructions.includes(cmd);
 }
 
 export function isWideCommand(cmd) {
-    return WideInstructions.includes(cmd);
+  return WideInstructions.includes(cmd);
 }

@@ -1,6 +1,6 @@
 import uuid4 from 'uuid/v4';
-import { parser, INPROGRESS, COMPLETED, WAITING, FAILED } from "@vm-parser/parser";
-import * as store from "../services/store.service";
+import { parser, INPROGRESS, COMPLETED, WAITING, FAILED } from '@vm-parser/parser';
+import * as store from '../services/store.service';
 
 export const getTaskById = (req, res, next, id) => {
     const task = store.getTask(id);

@@ -2,6 +2,8 @@
   "name": "@vm-parser/api",
   "version": "1.0.0",
   "scripts": {
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "start": "node ./dist/server.js",
     "start:dev": "cross-env DEBUG=vm-parse:api NODE_ENV=development nodemon --exec babel-node ./src/server.js",
     "build": "babel src --out-dir dist --copy-files"
@@ -13,6 +15,7 @@
     "@babel/node": "^7.6.3",
     "@babel/preset-env": "^7.6.3",
     "cross-env": "^6.0.3",
+    "eslint": "^6.8.0",
     "nodemon": "^1.19.4"
   },
   "dependencies": {
