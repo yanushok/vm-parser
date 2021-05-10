@@ -14,7 +14,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",
